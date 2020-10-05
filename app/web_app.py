@@ -19,15 +19,12 @@ from sklearn.metrics import classification_report
 #def loadData():
 
 # %%
-df = pd.read_csv("../data/cleaned/NCDB_cleaned_N513.csv")
+df = pd.read_csv("../data/cleaned/NCDB_cleaned_N924.csv")
  # return df
 
 #def preprocess(df):
 outcome = df['metastasis']
-features = df.drop(columns =['metastasis',
-                            'regional_nodes_positive_bin',
-                            'regional_nodes_ITC_bin',
-                            'lymph_node_mets_bin'])
+features = df.drop(columns =['metastasis'])
     
  # one-hot encode categorical variables  
 one_hot_tumor_site = pd.get_dummies(features['tumor_site'], prefix =  "tumor_site")
