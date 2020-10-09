@@ -144,8 +144,8 @@ rope==0.17.0
 rsa==4.6
 Rtree==0.9.4
 s3transfer==0.3.3
-scikit-learn @ file:///opt/concourse/worker/volumes/live/2dacdc11-21e7-44f5-57b4-6b8eb6ceb626/volume/scikit-learn_1598376924598/work
-scipy @ file:///opt/concourse/worker/volumes/live/9698578f-91da-4d5f-6fce-b26b1f42eb5a/volume/scipy_1597686637948/work
+sklearn==0.23.2
+scipy==1.5.2
 scs==2.1.2
 seaborn==0.10.1
 Send2Trash==1.5.0
