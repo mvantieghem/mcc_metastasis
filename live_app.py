@@ -7,7 +7,8 @@ Created on Tue Sep 22 09:19:21 2020
 """
 
 # %%
-
+import sklearn
+import scipy
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
