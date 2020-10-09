@@ -11,44 +11,54 @@ Created on Tue Sep 22 09:19:21 2020
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.calibration import CalibratedClassifierCV
+from scipy.stats import zscore
+
+
 
 #@st.cache
 #def loadData():
 
 # %%
-df = pd.read_csv("../data/cleaned/NCDB_cleaned_N924.csv")
- # return df
+# OPEN DATA 
+df = pd.read_csv("../data/cleaned/NCDB_cleaned_all_cases.csv")
 
-#def preprocess(df):
-outcome = df['metastasis']
-features = df.drop(columns =['metastasis'])
-    
- # one-hot encode categorical variables  
-one_hot_tumor_site = pd.get_dummies(features['tumor_site'], prefix =  "tumor_site")
-features2 = features.drop(columns = ['tumor_site'])
-features3 = features2.join(one_hot_tumor_site)
-    
-# split into train-test split
-X_train, X_test, y_train, y_test = train_test_split(features3, outcome,
-                                                   random_state = 0)
+# select features to include  
+df_selected = df [['AGE',  'lymph_vasc_invasion', 
+                   'tumor_size_bins_cm',  'metastasis']]
+
+#drop extra stuff
+df_drop = df_selected.dropna(axis = 0)
+
+# center scale! 
+#df_drop['AGE'] = zscore(df_drop.AGE)
+#df_drop['tumor_size_bins_cm'] = zscore(df_drop.tumor_size_bins_cm)
+
+outcome = df_drop['metastasis']
+features = df_drop.drop(columns =['metastasis'])
+
 
 # %% 
-#def classification_model(X_train, X_test, y_train, y_test):
-# fit the model on all  of  training data 
-lr_model = LogisticRegression(C = 0.01)
-lr_model.fit(X_train, y_train)
-y_pred = lr_model.predict(X_test)
-#score = lr_model.score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
+
+# fit the model on all data that exists
+lr_model = LogisticRegression(class_weight = 'balanced', 
+                              max_iter = 1000,
+                              penalty = 'none',
+                              solver = 'saga', 
+                             random_state = 0)
+lr_model.fit(features, outcome)
+pred_probs = lr_model.predict_proba(features)
+
+# calibrate the probabiities 
+platts_scaling = CalibratedClassifierCV(lr_model, cv = 2, method = "isotonic")
+platts_scaling.fit(features, outcome)
+calibrated_probs = platts_scaling.predict_proba(features)[:,1]
 
 # %% 
 
 """
-# Predicting Probability of Metastasis
-in Merkel Cell Carcinoma
+# Modeling Metastasis
+Predicting risk for metastasis in Merkel Cell Carcinoma
 """
  
  #  return score, report, lr_model
@@ -61,54 +71,49 @@ in Merkel Cell Carcinoma
 ### Patient demographics:
 """
 
-age = st.slider("Select Age", min_value = 21, max_value = 100)
-sex = st.selectbox("Sex", options = [1,2]) # options..
-immuno_suppressed = st.radio("Does patient have immunosuppression?", 
-                                 options = [ 0,1])
-    
-"""
-### Tumor site:
-"""
-tumor_site_head_neck = st.checkbox("Head or neck")
-tumor_site_trunk = st.checkbox("Trunk")
-tumor_site_extremity = st.checkbox("Extremity")
-tumor_site_other = st.checkbox("Other")
-    
+age = st.slider("Select Age", min_value = 21, max_value = 100, value = 80)
+        
 """
 ### Tumor characteristics:
 """
 
 lymph_vasc_invasion = st.radio("Presence of lymph vascular invasion",
                                    options = [0,1])
-tumor_lymphocytes = st.radio("Presence of tumor-infiltrating lymphocytes", 
-                                 options = [0,1])
-tumor_depth = st.slider("Tumor dept (mm)", min_value = 0, max_value = 100)
-tumor_size = st.slider("Tumor size (cm)", min_value = 0, max_value = 10, step = 1)
-    
-features = {"AGE": [age], 
-                "SEX": [sex], 
-                "tumor_site_head_neck": [tumor_site_head_neck],
-                "tumor_site_trunk" : [tumor_site_trunk],
-                "tumor_site_extremity" : [tumor_site_extremity],
-                "tumor_site_other": [tumor_site_other],
+#tumor_size = st.select_box("Tumor size (cm)", 
+ #                          "<1", "1-2", "2-3", "3-4", "4-5", "5+")
+tumor_size = st.slider("Tumor size", min_value = 1, max_value = 6, value = 1)
+
+features_input = {"AGE": [age], 
                 "lymph_vasc_invasion": [lymph_vasc_invasion], 
-                "tumor_lymphocytes": [tumor_lymphocytes],
-                "immuno_suppressed": [immuno_suppressed], 
-                "tumor_depth": [tumor_depth], 
-                "tumor_size": [tumor_size]}
-features = pd.DataFrame(features)
+                "tumor_size_bins_cm": [tumor_size]}
+features_input = pd.DataFrame(features_input)
  
 # %%
     
 #user_prediction_data = accept_user_data()
-pred_prob_array = lr_model.predict_proba(features)
+pred_prob_array = lr_model.predict_proba(features_input)
 pred_prob = round(pred_prob_array[0,1],2)
 
+
+pred_prob_adjusted_array = platts_scaling.predict_proba(features_input)
+pred_prob_adjusted = round(pred_prob_adjusted_array[0,1],2)
+
+# assign class
+if pred_prob_adjusted > 0.2 :
+    pred_class = "Positive"
+    biopsy = "Yes"
+else:
+    pred_class = "Negative"
+    biopsy = "No"
+    
 """
 ## Result
 """ 
 
-st.write("Estimated probability of Metastasis", pred_prob)
+#st.write("Raw probability of Metastasis", pred_prob)
+st.write("Probability of Metastasis", pred_prob_adjusted)
+st.write('Class Assignment:', pred_class)
+st.write('Recommend for biopsy:', biopsy)
 
 
    

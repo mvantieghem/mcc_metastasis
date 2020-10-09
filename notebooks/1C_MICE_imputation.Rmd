@@ -1,0 +1,136 @@
+---
+title: "imputing data for NCDB"
+author: "Michelle.VanTieghem"
+date: "10/8/2020"
+output: html_document
+---
+
+
+```{r}
+
+library(tidymodels)
+library(tidyverse)
+library(readxl)
+library(mice)
+```
+
+```{r}
+df = read.csv("../data/cleaned/NCDB_cleaned_all_cases.csv")
+nrow(df)
+```
+
+select for variables we want to keep, 
+and exclude cases missing outcome and impt varr
+```{r}
+df_select = df %>%
+  select(AGE, tumor_size_bins_cm, lymph_vasc_invasion, metastasis) %>%
+  filter(!is.na(metastasis) & !is.na(lymph_vasc_invasion))
+
+nrow(df_select)
+```
+
+
+## check tumor size 
+```{r}
+summary(df_select$tumor_size_bins_cm)
+
+df_select %>%
+  filter(tumor_size_bins_cm == 0) %>%
+  count()
+```
+
+tumor size colinear with other vars?
+```{r}
+ggplot(data = df_select, aes(x = lymph_vasc_invasion, y = tumor_size_bins_cm)) + 
+  geom_jitter() 
+
+```
+examine missingness
+```{r}
+md.pattern(df_select)
+
+```
+
+
+## impute missing data
+m = the numbe of imputed datasets, 5 is default 
+method = lmm is predictive mean matching 
+will only impute tumor size
+```{r, warnings = F}
+tempData = mice(df_select, m = 5, maxit = 50, meth = 'pmm', seed = 500)
+summary(tempData)
+
+```
+
+check imputed data
+
+```{r}
+# red is imputed, blue is observed.
+densityplot(tempData)
+```
+
+
+```{r}
+# columns = imputation set 
+# rows = cases with missing data
+head(tempData$imp$tumor_size_bins_cm)
+
+# save the indices for imputed data
+index_imputed = rownames(tempData$imp$tumor_size_bins_cm)
+```
+
+Add imputed data 
+```{r}
+completeData = complete(tempData, 1)
+
+# add marker for imputed variables 
+completeData$imputed = NA
+for (i in 1:nrow(completeData)){
+ # print(i)
+  if (i %in% index_imputed){
+    completeData$imputed[i] = 1
+  } else { 
+    completeData$imputed[i] = 0}
+}
+  
+  
+summary(as.factor(completeData$imputed))
+
+```
+
+## check distributions of imputed data by metastasis
+```{r}
+ggplot(data =  completeData, aes(tumor_size_bins_cm,
+                                 color = as.factor(imputed))) + 
+  geom_density() +
+  theme_bw() + facet_grid(~metastasis)
+
+```
+
+## inspect relationships between imputed variable and LVI
+```{r}
+table <- completeData %>%
+  group_by(lymph_vasc_invasion) %>%
+  summarize(means = mean(tumor_size_bins_cm), 
+            sd = sd (tumor_size_bins_cm), 
+            lower = means -sd, 
+            upper = means + sd)
+
+ggplot(data =  table, aes(x = as.factor(lymph_vasc_invasion),
+                          y  = means))  +  
+  geom_jitter(data = completeData, aes(x = as.factor(lymph_vasc_invasion),
+                                       y = tumor_size_bins_cm),
+              alpha = 0.2) +
+  geom_errorbar(color = "dark red", size = 1, width = 0.2,
+                aes(ymin = lower, ymax = upper)) +
+    geom_point(color = "dark red", size = 3) + theme_bw() +
+  ylab("Tumor size")
+
+  
+```
+
+
+```{r}
+
+write.csv(completeData, file = "../data/processed/NCDB_MICE_imputed.csv", row.names = FALSE)
+```
