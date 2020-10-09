@@ -21,7 +21,7 @@ from scipy.stats import zscore
 
 # %%
 # OPEN DATA 
-df = pd.read_csv("../data/cleaned/NCDB_cleaned_all_cases.csv")
+df = pd.read_csv("data/cleaned/NCDB_cleaned_all_cases.csv")
 
 # select features to include  
 df_selected = df [['AGE',  'lymph_vasc_invasion', 
