@@ -7,6 +7,7 @@ Created on Tue Sep 22 09:19:21 2020
 """
 
 # %%
+
 import sklearn
 import scipy
 import streamlit as st
@@ -15,7 +16,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from scipy.stats import zscore
 
-
+print('The sklearn version is {}.'.format(sklearn.__version__))
+print(scipy.__version__)
 
 #@st.cache
 #def loadData():
