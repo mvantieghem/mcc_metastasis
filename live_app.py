@@ -16,8 +16,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from scipy.stats import zscore
 
-print('The sklearn version is {}.'.format(sklearn.__version__))
-print(scipy.__version__)
+#print('The sklearn version is {}.'.format(sklearn.__version__))
+#print(scipy.__version__)
 
 #@st.cache
 #def loadData():
@@ -28,7 +28,7 @@ df = pd.read_csv("data/cleaned/NCDB_cleaned_all_cases.csv")
 
 # select features to include  
 df_selected = df [['AGE',  'lymph_vasc_invasion', 
-                   'tumor_size_bins_cm',  'metastasis']]
+                   'tumor_size',  'metastasis']]
 
 #drop extra stuff
 df_drop = df_selected.dropna(axis = 0)
