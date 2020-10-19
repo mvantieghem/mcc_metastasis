@@ -78,29 +78,35 @@ def recode_tumor_size(var):
     Returns
     -------
     recode_var : variable (float)
-        values provided as exact values are converted into bins
-        all data converted into cm
-
+        all continuous exact values (mm)converted into cm
+        values provided as bins (start with 99) are converted to corresponding value in cm
     """
+    
     if (var == 0):
         recode_var = np.nan
-    elif (var == 991) | (var < 100):
+    # if exactt value provided, convert from mm to cm
+    elif (var < 990):
+        recode_var = var / 10
+    # otherwise, convertt bins to corresponding cm values 
+    elif (var == 991) :
         recode_var = 1
-    elif (var == 992) | (var < 200):
+    elif (var == 992) :
         recode_var = 2
-    elif (var == 993) | (var < 300):
+    elif (var == 993) :
         recode_var = 3
-    elif (var == 994)  | (var < 400):
+    elif (var == 994) :
         recode_var = 4
-    elif (var == 995) | (var < 500):
+    elif (var == 995) :
         recode_var = 5
-    elif(var == 996) | (var < 990):
+    elif(var == 996) :
         recode_var = 6 # but this really means 5 +
+    # everything else is nan
     else:
         recode_var = np.nan
     return recode_var
 
-def recode_outcome (df):
+
+#def recode_outcome (df):
     """ Recode outcome variable of metastasis
 
     Parameters
@@ -115,20 +121,20 @@ def recode_outcome (df):
 
     """
     # if they have both variables...  
-    if (not math.isnan(df.regional_nodes_positive_bin)) & (not math.isnan(df.lymph_node_mets_bin)):
+   # if (not math.isnan(df.regional_nodes_positive_bin)) & (not math.isnan(df.lymph_node_mets_bin)):
         # provide value if they both agree
-        if (df.regional_nodes_positive_bin == df.lymph_node_mets_bin): 
-            return df.regional_nodes_positive_bin
+   #     if (df.regional_nodes_positive_bin == df.lymph_node_mets_bin): 
+    #        return df.regional_nodes_positive_bin
        
         # if they don't agree, exclude as NAN
-        else: 
-            return np.nan 
+     #   else: 
+      #      return np.nan 
         
     # if they only have one variable, use that
-    elif (not math.isnan(df.regional_nodes_positive_bin)):
-        return df.regional_nodes_positive_bin
-    elif (not math.isnan(df.lymph_node_mets_bin)):
-        return df.lymph_node_mets_bin
+    #elif (not math.isnan(df.regional_nodes_positive_bin)):
+     #   return df.regional_nodes_positive_bin
+    #elif (not math.isnan(df.lymph_node_mets_bin)):
+     #   return df.lymph_node_mets_bin
 
 # %% Making tables 
 

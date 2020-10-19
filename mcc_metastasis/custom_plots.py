@@ -41,21 +41,25 @@ def plot_predprobs(y_probs, key_thresh, filename):
     plt.legend(loc="center right", ncol=1)
     plt.savefig(filename, bbox_inches = 'tight')
     
+
 def plot_pr_curve(y_test, y_prob, key_thresh, filename):
 
     precision, recall, thresh = precision_recall_curve(y_test, y_prob)
     pr_auc_score = auc(recall, precision)
-    thresh_lower = np.argmin(np.abs(thresh -key_thresh))
-    thresh_default = np.argmin(np.abs(thresh - 0.5))
+    
+    precision_default = precision_score(y_test, y_prob > 0.5)
+    recall_default = recall_score(y_test, y_prob > 0.5)
+    precision_key = precision_score(y_test, y_prob > key_thresh)
+    recall_key = recall_score(y_test, y_prob > key_thresh)
 
     plt.figure(figsize = (10, 6))
     plt.step(recall, precision,  where='post',  color = "blue",
         label='PR AUC = %0.2f'% pr_auc_score)
-    plt.plot(recall[thresh_lower], precision[thresh_lower], 'o', markersize = 10,
-        label = "Thresh: %0.2f \nPrecision: %0.2f \nRecall: %0.2f" % (key_thresh, precision[thresh_lower], recall[thresh_lower]), 
+    plt.plot(recall_key, precision_key, 'o', markersize = 10,
+        label = "Thresh: %0.2f \nPrecision: %0.2f \nRecall: %0.2f" % (key_thresh, precision_key, recall_key), 
              mew = 3, color = "red")
-    plt.plot(recall[thresh_default], precision[thresh_default], 'o', markersize = 10,
-       label = "Thresh: %0.2f \nPrecision: %0.2f \nRecall: %0.2f" % (0.5, precision[thresh_default], recall[thresh_default]), 
+    plt.plot(recall_default, precision_default, 'o', markersize = 10,
+       label = "Thresh: %0.2f \nPrecision: %0.2f \nRecall: %0.2f" % (0.5, precision_default, recall_default), 
               mew = 3, color = "black")
     plt.xlabel('Recall', fontsize = 20)
     plt.ylabel('Precision', fontsize = 20)
@@ -65,6 +69,7 @@ def plot_pr_curve(y_test, y_prob, key_thresh, filename):
     plt.legend(loc="lower right", fontsize = 16)
     plt.tight_layout()
     plt.savefig(filename, bbox_inches = 'tight')
+
 
 
 def plot_roc_curve(y_test, y_prob, key_thresh, filename):
