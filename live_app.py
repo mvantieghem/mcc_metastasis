@@ -44,18 +44,25 @@ features = df_drop.drop(columns =['metastasis'])
 # %% 
 
 # fit the model on all data that exists
-lr_model = LogisticRegression(class_weight = 'balanced', 
-                              max_iter = 1000,
-                              penalty = 'none',
-                              solver = 'saga', 
-                             random_state = 0)
-lr_model.fit(features, outcome)
-pred_probs = lr_model.predict_proba(features)
+#lr_model = LogisticRegression(class_weight = 'balanced', 
+  #                            max_iter = 1000,
+ #                             penalty = 'none',
+   #                           solver = 'saga', 
+#    #                         random_state = 0)
+#lr_model.fit(features, outcome)
+#pred_probs = lr_model.predict_proba(features)
 
 # calibrate the probabiities 
-platts_scaling = CalibratedClassifierCV(lr_model, cv = 2, method = "isotonic")
-platts_scaling.fit(features, outcome)
-calibrated_probs = platts_scaling.predict_proba(features)[:,1]
+#platts_scaling = CalibratedClassifierCV(lr_model, cv = 2, method = "isotonic")
+#platts_scaling.fit(features, outcome)
+#calibrated_probs = platts_scaling.predict_proba(features)[:,1]
+
+# %%
+import pickle 
+
+filename = 'model_output/final_logistic_isotonic_model.sav'
+
+loaded_model = pickle.load(open(filename, 'rb'))
 
 # %% 
 
@@ -74,35 +81,72 @@ Predicting risk for metastasis in Merkel Cell Carcinoma
 ### Patient demographics:
 """
 
-age = st.slider("Select Age", min_value = 21, max_value = 100, value = 80)
-        
+age = st.slider("Age", min_value = 21, max_value = 100, value = 80)
+sex = st.selectbox("Sex", options = ["Male", 'Female'])
+
+
 """
 ### Tumor characteristics:
 """
+tumor_size = st.slider("Tumor size", min_value = 0.1, max_value = 20.0, value = 1.0)
 
-lymph_vasc_invasion = st.radio("Presence of lymph vascular invasion",
-                                   options = [0,1])
-#tumor_size = st.select_box("Tumor size (cm)", 
- #                          "<1", "1-2", "2-3", "3-4", "4-5", "5+")
-tumor_size = st.slider("Tumor size", min_value = 1, max_value = 6, value = 1)
+tumor_site = st.selectbox("Tumor location",
+                          options = ["Head or neck", "Trunk",  "Extremity", "Other"])
 
-features_input = {"AGE": [age], 
-                "lymph_vasc_invasion": [lymph_vasc_invasion], 
-                "tumor_size_bins_cm": [tumor_size]}
+
+lymph_vasc_invasion = st.selectbox("Presence of lymphnode vascular invasion",
+                                   options = ["Yes", 'No'])
+growth_pattern = st.selectbox("Infiltrative growth pattern",
+                                   options = ["Yes", 'No'])
+
+tumor_lymphocytes = st.selectbox("Presence of tumor lymphocytes", 
+                             options = ["Yes", 'No'])
+
+# %% PROCESS INPUT DATA 
+
+
+# combine into dataframe
+features_input = {"AGE": [age],
+                  "tumor_size": [tumor_size],
+                  "SEX": [sex],
+                  "tumor_site": [tumor_site],
+                  "growth_pattern" : [growth_pattern],
+                  "lymph_vasc_invasion": [lymph_vasc_invasion],
+                  "tumor_lymphocytes": [tumor_lymphocytes]
+                  }
+
 features_input = pd.DataFrame(features_input)
- 
+
+
+mean_age = 73.407
+mean_tumor_size = 2.011
+# mean-center the continuous vvariables
+features_input['AGE'] = features_input.AGE - mean_age
+features_input['tumor_size'] = features_input.tumor_size - mean_tumor_size
+
+# process the dummy codedd variables 
+features_input['SEX'] = features_input.SEX == "Male"
+features_input['tumor_lymphocytes'] = features_input.tumor_lymphocytes == "Yes"
+features_input['lymph_vasc_invasion'] = features_input.lymph_vasc_invasion == "Yes"
+features_input['growth_pattern'] = features_input.growth_pattern == "Yes"
+features_input['tumor_site_trunk'] = features_input.tumor_site == "Trunk"
+features_input['tumor_site_head_neck'] = features_input.tumor_site == "Head or neck"
+features_input['tumor_site_other'] = features_input.tumor_site == "Other"
+
+features_input = features_input.drop(columns = 'tumor_site')
+# reference, don't code
+#features_input['tumor_site_extremity'] = features_input.tumor_site == "Extremity"
+
 # %%
+
+key_thresh = 0.79
     
-#user_prediction_data = accept_user_data()
-pred_prob_array = lr_model.predict_proba(features_input)
-pred_prob = round(pred_prob_array[0,1],2)
 
-
-pred_prob_adjusted_array = platts_scaling.predict_proba(features_input)
+pred_prob_adjusted_array = loaded_model.predict_proba(features_input)
 pred_prob_adjusted = round(pred_prob_adjusted_array[0,1],2)
 
 # assign class
-if pred_prob_adjusted > 0.2 :
+if pred_prob_adjusted < key_thresh :
     pred_class = "Positive"
     biopsy = "Yes"
 else:
@@ -113,8 +157,8 @@ else:
 ## Result
 """ 
 
-#st.write("Raw probability of Metastasis", pred_prob)
-st.write("Probability of Metastasis", pred_prob_adjusted)
+# subtracting from 1, because we predicted no-metas as the positive class
+st.write("Probability of Metastasis", round(1- pred_prob_adjusted,2))
 st.write('Class Assignment:', pred_class)
 st.write('Recommend for biopsy:', biopsy)
 
