@@ -1,0 +1,8 @@
+,metrics,scores
+0,precision,0.846
+1,recall,0.485
+2,roc_auc,0.623
+3,accuracy,0.56
+4,f1 score,0.617
+5,pr_auc,0.786
+6,brier_score,0.44
