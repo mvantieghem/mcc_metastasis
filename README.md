@@ -16,7 +16,7 @@ The outcome of interest is positive case of metastasis, designated from sentinel
 This app serves as a clinical prototype to guide decision-making for physicians and patients about whether to conduct lymph node biopsy. 
 Currently, it's deployed using streamlit's github sharing service.
 
-[App](https://share.streamlit.io/mvantieghem/mcc_metastasis/master/live_app.py) | [Slides](https://docs.google.com/presentation/d/1-1j8M5oHO6jLQpZEecjuQYNstHOt49aAP7QeE8-4N6s/edit#slide=id.ga1e0b50080_0_0)   |   [Demo](https://youtu.be/o4iRkPfRkaA)
+[Blog] (https://mvantieghem.github.io/blog/modeling_metastasis/) | [App](https://share.streamlit.io/mvantieghem/mcc_metastasis/master/live_app.py) | [Slides](https://docs.google.com/presentation/d/1-1j8M5oHO6jLQpZEecjuQYNstHOt49aAP7QeE8-4N6s/edit#slide=id.ga1e0b50080_0_0)   |   [Demo](https://youtu.be/o4iRkPfRkaA)
 
 
 
@@ -34,5 +34,5 @@ Requirements.txt provides the required packages to deploy the streamlit app via 
 
 **model output:** Storing final model deployed in the application and associated model results. 
 
-**data:** Contains raw, cleaned and processed (imputed) datasets used for analysis.
+**data:** Contains raw data from NCDB and cleaned dataset used for analysis.
 
